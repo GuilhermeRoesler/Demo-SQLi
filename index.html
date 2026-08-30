@@ -15,7 +15,7 @@
 
         .container {
             width: 90%;
-            max-width: 600px;
+            max-width: 640px;
             margin: auto;
             background: #fff;
             padding: 20px;
@@ -26,6 +26,60 @@
         h2,
         h3 {
             color: #2f4f4f;
+        }
+
+        .aviso {
+            background: #fff8e6;
+            border: 1px solid #e6d5a8;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            font-size: 0.92rem;
+            line-height: 1.45;
+        }
+
+        .modo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 14px 0 18px;
+        }
+
+        .modo button {
+            padding: 8px 14px;
+            border-radius: 4px;
+            border: 1px solid #2f4f4f;
+            background: #fff;
+            color: #2f4f4f;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modo button.ativo {
+            background: #2f4f4f;
+            color: #fff;
+        }
+
+        .modo button.seguro.ativo {
+            background: #1f6b4a;
+            border-color: #1f6b4a;
+        }
+
+        .modo-label {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            padding: 8px 10px;
+            border-radius: 4px;
+        }
+
+        .modo-label.vuln {
+            background: #fdecea;
+            color: #8a1f11;
+        }
+
+        .modo-label.seguro {
+            background: #e8f6ef;
+            color: #1f6b4a;
         }
 
         form {
@@ -63,42 +117,6 @@
             margin: 20px 0;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        table,
-        th,
-        td {
-            border: 1px solid #ccc;
-        }
-
-        th,
-        td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #2f4f4f;
-            color: white;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .codigo {
-            background-color: #eee;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            border: 1px solid #ddd;
-            overflow-x: auto;
-        }
-
         a {
             color: #2f4f4f;
             text-decoration: none;
@@ -107,22 +125,89 @@
         a:hover {
             text-decoration: underline;
         }
+
+        .dicas {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        code {
+            background: #eee;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h2>Buscar Herói no Catálogo (SQLite)</h2>
+        <h2>Laboratório SQLi — Buscar Herói</h2>
 
-        <!-- O 'action' aponta para o script VULNERÁVEL. Mudaremos isso depois. -->
-        <form action="buscar.php" method="GET">
+        <div class="aviso">
+            <strong>Uso acadêmico apenas.</strong> Rode só em <code>localhost</code>.
+            Não hospede este projeto na internet. Use apenas com autorização e para aprendizado.
+        </div>
+
+        <p>Escolha o modo e busque um herói. Compare o comportamento vulnerável com o protegido por prepared statements.</p>
+
+        <div class="modo" role="group" aria-label="Modo da consulta">
+            <button type="button" id="btn-vuln" class="ativo" aria-pressed="true">Versão vulnerável</button>
+            <button type="button" id="btn-seguro" class="seguro" aria-pressed="false">Versão segura</button>
+        </div>
+
+        <div id="modo-label" class="modo-label vuln">
+            Modo atual: <strong>vulnerável</strong> (<code>buscar.php</code>) — a entrada entra direto na SQL.
+        </div>
+
+        <form id="form-busca" action="buscar.php" method="GET">
             <label for="nome">Nome do Herói:</label>
-            <input type="text" id="nome" name="nome">
+            <input type="text" id="nome" name="nome" placeholder="Ex.: Batman" required>
             <input type="submit" value="Buscar">
         </form>
+
         <hr>
-        <h3>Resultados:</h3>
+
+        <div class="dicas">
+            <h3>Sugestões rápidas</h3>
+            <ol>
+                <li>Busque <code>Batman</code> nos dois modos (deve funcionar igual).</li>
+                <li>No modo vulnerável, teste <code>' OR '1'='1</code> e observe o SQL montado.</li>
+                <li>Repita o mesmo payload no modo seguro — a injeção deve falhar.</li>
+            </ol>
+            <p>Roteiro completo: veja o <a href="readme.md">README</a>. Recriar o banco: <a href="setup.php">setup.php</a>.</p>
+        </div>
     </div>
+
+    <script>
+        (function () {
+            var form = document.getElementById('form-busca');
+            var label = document.getElementById('modo-label');
+            var btnVuln = document.getElementById('btn-vuln');
+            var btnSeguro = document.getElementById('btn-seguro');
+
+            function setModo(seguro) {
+                form.action = seguro ? 'buscar_seguro.php' : 'buscar.php';
+                btnVuln.classList.toggle('ativo', !seguro);
+                btnSeguro.classList.toggle('ativo', seguro);
+                btnVuln.setAttribute('aria-pressed', String(!seguro));
+                btnSeguro.setAttribute('aria-pressed', String(seguro));
+                label.className = 'modo-label ' + (seguro ? 'seguro' : 'vuln');
+                label.innerHTML = seguro
+                    ? 'Modo atual: <strong>seguro</strong> (<code>buscar_seguro.php</code>) — prepared statements.'
+                    : 'Modo atual: <strong>vulnerável</strong> (<code>buscar.php</code>) — a entrada entra direto na SQL.';
+            }
+
+            btnVuln.addEventListener('click', function () { setModo(false); });
+            btnSeguro.addEventListener('click', function () { setModo(true); });
+
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('modo') === 'seguro') {
+                setModo(true);
+            }
+        })();
+    </script>
 </body>
 
 </html>

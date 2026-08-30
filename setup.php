@@ -44,10 +44,11 @@ try {
 
     echo "Dados inseridos com sucesso.<br>";
     echo "<h2>Configuração Concluída!</h2>";
-    echo "<p>O banco 'lab.db' está pronto.</p>";
-    echo "<a href='index_sqlite.html'>Ir para o Laboratório</a>";
+    echo "<p>O banco <code>lab.db</code> está pronto (dados fictícios de laboratório).</p>";
+    echo "<p><strong>Lembrete:</strong> use apenas em localhost, para fins acadêmicos.</p>";
+    echo "<a href='index.html'>Ir para o Laboratório</a>";
 
 } catch (PDOException $e) {
-    echo "Erro na configuração do banco: " . $e->getMessage();
+    echo "Erro na configuração do banco: " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
 }
 ?>

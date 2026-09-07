@@ -2,10 +2,17 @@
 
 Material didático para entender **o que é SQL Injection (SQLi)**, **por que acontece**, **qual o impacto** e **como mitigar** com prepared statements — usando um catálogo fictício de heróis.
 
+### Demo estática (GitHub Pages)
+
+Quer só ver o fluxo sem instalar PHP? Abra a pasta [`docs/`](docs/) — guia passo a passo no navegador, com respostas **simuladas** (sem backend).
+
+Para publicar: no GitHub, **Settings → Pages → Deploy from a branch**, escolha a branch principal e a pasta `/docs`.
+
 > **Aviso ético (obrigatório)**
 >
 > - Uso **somente acadêmico / laboratório autorizado**.
-> - Execute **apenas em `localhost`**. Não publique este PHP em host público, VPS, GitHub Pages com backend, etc.
+> - O lab PHP deve rodar **apenas em `localhost`**. Não publique `buscar.php` / `setup.php` como backend público.
+> - A pasta `docs/` é uma **simulação estática** segura para Pages — não executa SQL de verdade.
 > - Os payloads do roteiro são para este ambiente controlado. **Não** use contra sistemas de terceiros.
 > - Este repositório contém código **intencionalmente vulnerável** (`buscar.php`).
 
@@ -57,6 +64,7 @@ Aqui o objetivo é a **intuição sólida** do problema e da defesa; o README do
 
 | Arquivo | Função |
 |---------|--------|
+| `docs/index.html` | Demo estática (GitHub Pages) — roteiro simulado |
 | `setup.php` | Cria/recria `lab.db` e dados fictícios |
 | `conexao.php` | Conexão PDO → SQLite |
 | `index.html` | Interface com **dois modos** (vulnerável / seguro) |

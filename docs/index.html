@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo SQLi — Guia interativo (simulação)</title>
+    <meta name="description" content="Demo estática educacional de SQL Injection: veja o ataque e a correção com prepared statements, sem backend.">
+    <style>
+        :root {
+            --ink: #1e2a2a;
+            --slate: #2f4f4f;
+            --slate-hover: #3e6a6a;
+            --safe: #1f6b4a;
+            --safe-bg: #e8f6ef;
+            --vuln: #8a1f11;
+            --vuln-bg: #fdecea;
+            --warn-bg: #fff8e6;
+            --warn-border: #e6d5a8;
+            --paper: #ffffff;
+            --page: #eef1f1;
+            --line: #dde3e3;
+            --muted: #5a6a6a;
+            --code-bg: #e8ecec;
+            --radius: 8px;
+            --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+            --mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font);
+            background: var(--page);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        .wrap {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 24px 16px 64px;
+        }
+
+        header {
+            background: var(--paper);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            margin-bottom: 18px;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 1.45rem;
+            color: var(--slate);
+        }
+
+        header .sub {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.98rem;
+        }
+
+        .aviso {
+            background: var(--warn-bg);
+            border: 1px solid var(--warn-border);
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 0.9rem;
+        }
+
+        .aviso strong { color: var(--ink); }
+
+        .badge-sim {
+            display: inline-block;
+            background: #e3eaf5;
+            color: #1a3a6b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .step-tab {
+            border: 1px solid var(--line);
+            background: var(--paper);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .step-tab:hover { border-color: var(--slate); color: var(--slate); }
+
+        .step-tab.ativo {
+            background: var(--slate);
+            border-color: var(--slate);
+            color: #fff;
+        }
+
+        .step-tab.feito:not(.ativo) {
+            border-color: var(--safe);
+            color: var(--safe);
+        }
+
+        .panel {
+            background: var(--paper);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            margin-bottom: 18px;
+        }
+
+        .panel h2 {
+            margin: 0 0 8px;
+            font-size: 1.2rem;
+            color: var(--slate);
+        }
+
+        .panel p.lead {
+            margin: 0 0 16px;
+            color: var(--muted);
+        }
+
+        .hidden { display: none !important; }
+
+        .modo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 0 0 14px;
+        }
+
+        .modo button {
+            padding: 8px 14px;
+            border-radius: 4px;
+            border: 1px solid var(--slate);
+            background: #fff;
+            color: var(--slate);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modo button.ativo {
+            background: var(--slate);
+            color: #fff;
+        }
+
+        .modo button.seguro.ativo {
+            background: var(--safe);
+            border-color: var(--safe);
+        }
+
+        .modo-label {
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+            padding: 8px 10px;
+            border-radius: 4px;
+        }
+
+        .modo-label.vuln { background: var(--vuln-bg); color: var(--vuln); }
+        .modo-label.seguro { background: var(--safe-bg); color: var(--safe); }
+
+        .busca-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .busca-row label { font-weight: 700; }
+
+        .busca-row input[type="text"] {
+            flex: 1;
+            min-width: 180px;
+            padding: 9px 11px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .busca-row button[type="submit"],
+        .btn-primario {
+            padding: 9px 14px;
+            background: var(--slate);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .busca-row button[type="submit"]:hover,
+        .btn-primario:hover { background: var(--slate-hover); }
+
+        .atalhos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 0;
+        }
+
+        .atalhos button {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px dashed #9aabab;
+            background: #f7fafa;
+            color: var(--slate);
+            cursor: pointer;
+        }
+
+        .atalhos button:hover {
+            border-style: solid;
+            background: #e8f0f0;
+        }
+
+        .atalhos .hint {
+            width: 100%;
+            margin: 4px 0 0;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .resultado {
+            margin-top: 18px;
+            border-top: 1px solid var(--line);
+            padding-top: 16px;
+        }
+
+        .resultado.vazio-msg {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .badge.vuln { background: var(--vuln-bg); color: var(--vuln); }
+        .badge.seguro { background: var(--safe-bg); color: var(--safe); }
+        .badge.erro { background: #fff0e8; color: #9a3412; }
+
+        .codigo {
+            background: var(--code-bg);
+            padding: 12px;
+            border-radius: 5px;
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            border: 1px solid var(--line);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 8px 0 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.92rem;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        th {
+            background: var(--slate);
+            color: #fff;
+        }
+
+        tr:nth-child(even) { background: #f9f9f9; }
+
+        .nota {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #f0f4f4;
+            color: var(--ink);
+        }
+
+        .nota.destaque-vuln {
+            background: var(--vuln-bg);
+            color: var(--vuln);
+        }
+
+        .nota.destaque-seguro {
+            background: var(--safe-bg);
+            color: var(--safe);
+        }
+
+        .nav-steps {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .btn-sec {
+            padding: 9px 14px;
+            background: #fff;
+            color: var(--slate);
+            border: 1px solid var(--slate);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-sec:hover { background: #f0f5f5; }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 0;
+        }
+
+        .checklist li {
+            padding: 8px 0 8px 28px;
+            position: relative;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .checklist li:last-child { border-bottom: none; }
+
+        .checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: var(--slate);
+        }
+
+        .code-compare {
+            display: grid;
+            gap: 14px;
+        }
+
+        @media (min-width: 720px) {
+            .code-compare { grid-template-columns: 1fr 1fr; }
+        }
+
+        .code-card h3 {
+            margin: 0 0 8px;
+            font-size: 0.95rem;
+        }
+
+        .code-card.vuln h3 { color: var(--vuln); }
+        .code-card.seguro h3 { color: var(--safe); }
+
+        .code-card pre {
+            margin: 0;
+            background: #1e2a2a;
+            color: #e8eeee;
+            padding: 14px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            overflow-x: auto;
+            line-height: 1.45;
+            min-height: 140px;
+        }
+
+        .code-card .hl-bad { color: #ffb4a8; }
+        .code-card .hl-good { color: #9ddeb8; }
+
+        footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        footer a { color: var(--slate); }
+
+        .conceito-grid {
+            display: grid;
+            gap: 12px;
+            margin: 14px 0;
+        }
+
+        @media (min-width: 600px) {
+            .conceito-grid { grid-template-columns: 1fr 1fr 1fr; }
+        }
+
+        .conceito-card {
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 12px;
+            background: #fafcfc;
+        }
+
+        .conceito-card strong {
+            display: block;
+            color: var(--slate);
+            margin-bottom: 4px;
+            font-size: 0.92rem;
+        }
+
+        .conceito-card span {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div class="badge-sim">Simulação estática · GitHub Pages</div>
+            <h1>Demo SQLi — Buscar Herói</h1>
+            <p class="sub">Guia passo a passo para entender SQL Injection e a correção com prepared statements. Sem PHP real: as respostas são forjadas para os casos do roteiro.</p>
+            <div class="aviso">
+                <strong>Uso acadêmico / demonstração.</strong>
+                Isto não é um banco nem um servidor PHP — é uma simulação no navegador.
+                Não use estas técnicas contra sistemas de terceiros.
+            </div>
+        </header>
+
+        <nav class="steps" aria-label="Passos do guia" id="tabs">
+            <button type="button" class="step-tab ativo" data-step="0">1. Conceito</button>
+            <button type="button" class="step-tab" data-step="1">2. Busca normal</button>
+            <button type="button" class="step-tab" data-step="2">3. Injeção</button>
+            <button type="button" class="step-tab" data-step="3">4. Modo seguro</button>
+            <button type="button" class="step-tab" data-step="4">5. Código</button>
+        </nav>
+
+        <!-- PASSO 0 -->
+        <section class="panel" data-panel="0">
+            <h2>O que é SQL Injection?</h2>
+            <p class="lead">Aplicações montam comandos SQL para falar com o banco. Se a entrada do usuário for <em>colada</em> dentro da string SQL, o atacante pode alterar a lógica do comando.</p>
+
+            <div class="conceito-grid">
+                <div class="conceito-card">
+                    <strong>Consulta esperada</strong>
+                    <span>Filtrar heróis pelo nome digitado, ex.: <code>Batman</code>.</span>
+                </div>
+                <div class="conceito-card">
+                    <strong>O problema</strong>
+                    <span>Concatenar a entrada na query transforma dado em código SQL.</span>
+                </div>
+                <div class="conceito-card">
+                    <strong>A defesa</strong>
+                    <span>Prepared statements: o valor vai separado do molde SQL.</span>
+                </div>
+            </div>
+
+            <p>Neste demo fictício, a versão vulnerável equivale a:</p>
+            <pre class="codigo">SELECT id, nome_heroi, poder FROM herois WHERE nome_heroi = 'ENTRADA_DO_USUARIO'</pre>
+            <p>Se a entrada for <code>Batman</code>, tudo bem. Se for <code>' OR '1'='1</code>, a condição muda e o filtro deixa de funcionar como o programador imaginou.</p>
+
+            <div class="nav-steps">
+                <span></span>
+                <button type="button" class="btn-primario" data-goto="1">Começar a demo →</button>
+            </div>
+        </section>
+
+        <!-- PASSO 1 -->
+        <section class="panel hidden" data-panel="1">
+            <h2>Passo 2 — Busca legítima</h2>
+            <p class="lead">Nos dois modos, uma busca normal deve funcionar igual. Experimente <code>Batman</code> (ou use o atalho).</p>
+
+            <div id="lab-1"></div>
+
+            <div class="nav-steps">
+                <button type="button" class="btn-sec" data-goto="0">← Voltar</button>
+                <button type="button" class="btn-primario" data-goto="2">Próximo: ver a injeção →</button>
+            </div>
+        </section>
+
+        <!-- PASSO 2 -->
+        <section class="panel hidden" data-panel="2">
+            <h2>Passo 3 — Explorar a vulnerabilidade</h2>
+            <p class="lead">Modo vulnerável (simulado). A entrada altera a SQL montada. Use os atalhos do roteiro — só esses casos estão forjados.</p>
+
+            <div id="lab-2"></div>
+
+            <div class="nav-steps">
+                <button type="button" class="btn-sec" data-goto="1">← Voltar</button>
+                <button type="button" class="btn-primario" data-goto="3">Próximo: modo seguro →</button>
+            </div>
+        </section>
+
+        <!-- PASSO 3 -->
+        <section class="panel hidden" data-panel="3">
+            <h2>Passo 4 — Prepared statements</h2>
+            <p class="lead">Mesmos payloads, modo seguro. A string inteira é buscada como <em>nome</em>, não como SQL — a injeção falha.</p>
+
+            <div id="lab-3"></div>
+
+            <div class="nav-steps">
+                <button type="button" class="btn-sec" data-goto="2">← Voltar</button>
+                <button type="button" class="btn-primario" data-goto="4">Ver o código →</button>
+            </div>
+        </section>
+
+        <!-- PASSO 4 -->
+        <section class="panel hidden" data-panel="4">
+            <h2>Passo 5 — Antes e depois</h2>
+            <p class="lead">Trechos equivalentes ao lab PHP deste repositório. A diferença crítica é uma linha: concatenação vs placeholder.</p>
+
+            <div class="code-compare">
+                <div class="code-card vuln">
+                    <h3>✗ buscar.php (vulnerável)</h3>
+                    <pre>$sql = "SELECT id, nome_heroi, poder
+        FROM herois
+        WHERE nome_heroi = '" <span class="hl-bad">. $nome_heroi .</span> "'";
+
+$conn-&gt;query($sql);</pre>
+                </div>
+                <div class="code-card seguro">
+                    <h3>✓ buscar_seguro.php</h3>
+                    <pre>$stmt = $conn-&gt;prepare(
+  "SELECT id, nome_heroi, poder
+   FROM herois
+   WHERE nome_heroi = <span class="hl-good">?</span>"
+);
+$stmt-&gt;execute(<span class="hl-good">[$nome_heroi]</span>);</pre>
+                </div>
+            </div>
+
+            <ul class="checklist">
+                <li>Sei explicar SQLi em uma frase.</li>
+                <li>Vi o bypass (<code>' OR '1'='1</code>) e o vazamento via UNION na simulação.</li>
+                <li>Vi o mesmo payload falhar no modo seguro.</li>
+                <li>Entendi que prepared statements separam dado de código SQL.</li>
+            </ul>
+
+            <div class="nota" style="margin-top: 16px;">
+                O laboratório completo (PHP + SQLite real) roda só em <code>localhost</code> —
+                veja o README do repositório. Esta página é só a vitrine interativa.
+            </div>
+
+            <div class="nav-steps">
+                <button type="button" class="btn-sec" data-goto="3">← Voltar</button>
+                <button type="button" class="btn-primario" data-goto="1">Recomeçar a demo</button>
+            </div>
+        </section>
+
+        <footer>
+            Material didático · Demo estática para GitHub Pages ·
+            <a href="https://github.com/" id="repo-link">Ver repositório</a>
+        </footer>
+    </div>
+
+    <script>
+(function () {
+    var HEROIS = [
+        { id: 1, nome_heroi: "Superman", poder: "Voar, Super Força" },
+        { id: 2, nome_heroi: "Batman", poder: "Inteligência, Dinheiro" },
+        { id: 3, nome_heroi: "Mulher Maravilha", poder: "Super Força, Laço da Verdade" }
+    ];
+
+    var USUARIOS = [
+        { id: 1, nome_heroi: "admin", poder: "sha1$98f6bcd4$1$23..." },
+        { id: 2, nome_heroi: "bob", poder: "md5$e10adc39..." },
+        { id: 3, nome_heroi: "alice", poder: "bcrypt$2y$10$N9..." }
+    ];
+
+    var SQL_BASE = "SELECT id, nome_heroi, poder FROM herois WHERE nome_heroi = '";
+    var SQL_SAFE = "SELECT id, nome_heroi, poder FROM herois WHERE nome_heroi = ?";
+
+    function norm(s) {
+        return String(s || "").trim();
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function findHeroByName(nome) {
+        var n = nome.toLowerCase();
+        return HEROIS.filter(function (h) {
+            return h.nome_heroi.toLowerCase() === n;
+        });
+    }
+
+    /** Simula apenas os casos do roteiro acadêmico. */
+    function simularVulneravel(entrada) {
+        var e = norm(entrada);
+
+        if (!e) {
+            return { tipo: "vazio", sql: SQL_BASE + "'", rows: [], nota: "Digite um nome ou use um atalho." };
+        }
+
+        if (e === "' OR '1'='1") {
+            return {
+                tipo: "ok",
+                sql: SQL_BASE + e + "'",
+                rows: HEROIS.slice(),
+                nota: "Bypass do filtro: a condição ficou sempre verdadeira (OR '1'='1'), então todos os heróis voltaram."
+            };
+        }
+
+        if (e === "' ORDER BY 3 --") {
+            return {
+                tipo: "ok",
+                sql: "SELECT id, nome_heroi, poder FROM herois WHERE nome_heroi = '' ORDER BY 3 --'",
+                rows: HEROIS.slice(),
+                nota: "ORDER BY 3 funcionou — a consulta tem 3 colunas no SELECT. (Simulação: listamos os heróis.)"
+            };
+        }
+
+        if (e === "' ORDER BY 4 --") {
+            return {
+                tipo: "erro",
+                sql: "SELECT id, nome_heroi, poder FROM herois WHERE nome_heroi = '' ORDER BY 4 --'",
+                rows: [],
+                nota: "Erro simulado: não existe coluna 4. No lab real o SQLite avisaria o problema."
+            };
+        }
+
+        if (e === "x' UNION SELECT id, username, password_hash FROM usuarios --") {
+            return {
+                tipo: "ok",
+                sql: "SELECT id, nome_heroi, poder FROM herois WHERE nome_heroi = 'x' UNION SELECT id, username, password_hash FROM usuarios --'",
+                rows: USUARIOS.slice(),
+                nota: "UNION vazou a tabela usuarios (dados fictícios). As colunas aparecem disfarçadas como herói/poder."
+            };
+        }
+
+        var hit = findHeroByName(e);
+        if (hit.length) {
+            return {
+                tipo: "ok",
+                sql: SQL_BASE + e + "'",
+                rows: hit,
+                nota: "Busca legítima: um herói correspondente."
+            };
+        }
+
+        return {
+            tipo: "fora",
+            sql: SQL_BASE + e + "'",
+            rows: [],
+            nota: "Neste demo estático só os exemplos do roteiro (e nomes de heróis) estão simulados. Tente um atalho abaixo."
+        };
+    }
+
+    function simularSeguro(entrada) {
+        var e = norm(entrada);
+        var hit = findHeroByName(e);
+
+        if (!e) {
+            return { tipo: "vazio", sql: SQL_SAFE, rows: [], param: "", nota: "Digite um nome ou cole um payload para ver a diferença." };
+        }
+
+        if (hit.length) {
+            return {
+                tipo: "ok",
+                sql: SQL_SAFE,
+                param: e,
+                rows: hit,
+                nota: "Prepared statement: o valor foi ligado ao placeholder ? — busca normal ok."
+            };
+        }
+
+        return {
+            tipo: "ok",
+            sql: SQL_SAFE,
+            param: e,
+            rows: [],
+            nota: "Nenhum herói com esse nome literal. Payloads de injeção são tratados como texto, não como SQL."
+        };
+    }
+
+    function renderTabela(rows) {
+        if (!rows.length) {
+            return "<tr><td colspan='3'>Nenhum herói encontrado.</td></tr>";
+        }
+        return rows.map(function (r) {
+            return "<tr><td>" + escapeHtml(r.id) + "</td><td>" +
+                escapeHtml(r.nome_heroi) + "</td><td>" +
+                escapeHtml(r.poder) + "</td></tr>";
+        }).join("");
+    }
+
+    function renderResultado(res, seguro, entrada) {
+        if (res.tipo === "vazio") {
+            return "<p class='resultado vazio-msg'>" + escapeHtml(res.nota) + "</p>";
+        }
+
+        var badge = seguro
+            ? "<div class='badge seguro'>Modo seguro — prepared statements (simulado)</div>"
+            : res.tipo === "erro"
+                ? "<div class='badge erro'>Modo vulnerável — erro SQL (simulado)</div>"
+                : "<div class='badge vuln'>Modo vulnerável — concatenação na SQL (simulado)</div>";
+
+        var sqlBlock = seguro
+            ? "<p>Molde SQL (o valor não entra na string):</p><pre class='codigo'>" + escapeHtml(res.sql) + "</pre>" +
+              "<p>Parâmetro enviado ao <code>execute()</code>:</p><pre class='codigo'>" + escapeHtml(JSON.stringify([res.param])) + "</pre>"
+            : "<p>SQL montada (observe como a entrada altera o comando):</p><pre class='codigo'>" + escapeHtml(res.sql) + "</pre>";
+
+        var notaClass = "";
+        if (seguro && !res.rows.length && norm(entrada)) notaClass = "destaque-seguro";
+        if (!seguro && res.tipo === "ok" && res.rows.length > 1) notaClass = "destaque-vuln";
+
+        return (
+            "<div class='resultado'>" +
+            badge +
+            "<h3 style='margin:0 0 8px;color:var(--slate);font-size:1.05rem;'>Resultados para: \"" + escapeHtml(norm(entrada)) + "\"</h3>" +
+            sqlBlock +
+            (res.tipo === "erro"
+                ? "<p style='color:#9a3412;'><strong>Erro:</strong> ORDER BY term out of range — no such column: 4</p>"
+                : "<table><tr><th>ID</th><th>Nome do Herói</th><th>Poder</th></tr>" + renderTabela(res.rows) + "</table>") +
+            "<div class='nota " + notaClass + "'>" + escapeHtml(res.nota) + "</div>" +
+            "</div>"
+        );
+    }
+
+    function criarLab(opts) {
+        var root = document.getElementById(opts.mountId);
+        var forcarSeguro = opts.forcarSeguro;
+        var forcarVuln = opts.forcarVuln;
+        var mostrarToggle = !forcarSeguro && !forcarVuln;
+        var atalhos = opts.atalhos || [];
+        var modoSeguro = !!forcarSeguro;
+
+        root.innerHTML =
+            (mostrarToggle
+                ? "<div class='modo' role='group' aria-label='Modo'>" +
+                  "<button type='button' data-m='vuln' class='ativo'>Versão vulnerável</button>" +
+                  "<button type='button' data-m='seguro' class='seguro'>Versão segura</button></div>"
+                : "") +
+            "<div class='modo-label " + (modoSeguro ? "seguro" : "vuln") + "' data-label></div>" +
+            "<form data-form>" +
+            "<div class='busca-row'>" +
+            "<label for='" + opts.mountId + "-nome'>Nome do Herói:</label>" +
+            "<input type='text' id='" + opts.mountId + "-nome' data-input placeholder='Ex.: Batman' autocomplete='off'>" +
+            "<button type='submit'>Buscar</button>" +
+            "</div></form>" +
+            (atalhos.length
+                ? "<div class='atalhos'>" +
+                  atalhos.map(function (a) {
+                      return "<button type='button' data-fill=\"" + escapeHtml(a.valor) + "\">" + escapeHtml(a.rotulo) + "</button>";
+                  }).join("") +
+                  "<p class='hint'>Clique num atalho para preencher e buscar na hora.</p></div>"
+                : "") +
+            "<div data-out></div>";
+
+        var label = root.querySelector("[data-label]");
+        var form = root.querySelector("[data-form]");
+        var input = root.querySelector("[data-input]");
+        var out = root.querySelector("[data-out]");
+
+        function atualizarLabel() {
+            label.className = "modo-label " + (modoSeguro ? "seguro" : "vuln");
+            label.innerHTML = modoSeguro
+                ? "Modo atual: <strong>seguro</strong> (<code>buscar_seguro.php</code> simulado) — prepared statements."
+                : "Modo atual: <strong>vulnerável</strong> (<code>buscar.php</code> simulado) — a entrada entra direto na SQL.";
+        }
+
+        function buscar() {
+            var entrada = input.value;
+            var res = modoSeguro ? simularSeguro(entrada) : simularVulneravel(entrada);
+            out.innerHTML = renderResultado(res, modoSeguro, entrada);
+        }
+
+        atualizarLabel();
+
+        if (mostrarToggle) {
+            root.querySelectorAll(".modo button").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    modoSeguro = btn.getAttribute("data-m") === "seguro";
+                    root.querySelectorAll(".modo button").forEach(function (b) {
+                        b.classList.toggle("ativo", b === btn);
+                    });
+                    atualizarLabel();
+                    out.innerHTML = "";
+                });
+            });
+        }
+
+        form.addEventListener("submit", function (ev) {
+            ev.preventDefault();
+            buscar();
+        });
+
+        root.querySelectorAll("[data-fill]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                input.value = btn.getAttribute("data-fill");
+                buscar();
+            });
+        });
+
+        if (opts.auto) {
+            input.value = opts.auto;
+            buscar();
+        }
+    }
+
+    /* —— navegação dos passos —— */
+    var stepAtual = 0;
+    var feitos = {};
+
+    function irPara(n) {
+        n = Number(n);
+        stepAtual = n;
+        feitos[n] = true;
+
+        document.querySelectorAll("[data-panel]").forEach(function (p) {
+            p.classList.toggle("hidden", Number(p.getAttribute("data-panel")) !== n);
+        });
+
+        document.querySelectorAll(".step-tab").forEach(function (t) {
+            var s = Number(t.getAttribute("data-step"));
+            t.classList.toggle("ativo", s === n);
+            t.classList.toggle("feito", !!feitos[s] && s !== n);
+        });
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("tabs").addEventListener("click", function (ev) {
+        var t = ev.target.closest(".step-tab");
+        if (t) irPara(t.getAttribute("data-step"));
+    });
+
+    document.querySelectorAll("[data-goto]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            irPara(btn.getAttribute("data-goto"));
+        });
+    });
+
+    criarLab({
+        mountId: "lab-1",
+        atalhos: [
+            { rotulo: "Batman", valor: "Batman" },
+            { rotulo: "Superman", valor: "Superman" },
+            { rotulo: "Mulher Maravilha", valor: "Mulher Maravilha" }
+        ]
+    });
+
+    criarLab({
+        mountId: "lab-2",
+        forcarVuln: true,
+        atalhos: [
+            { rotulo: "Batman", valor: "Batman" },
+            { rotulo: "' OR '1'='1", valor: "' OR '1'='1" },
+            { rotulo: "ORDER BY 3", valor: "' ORDER BY 3 --" },
+            { rotulo: "ORDER BY 4", valor: "' ORDER BY 4 --" },
+            { rotulo: "UNION usuarios", valor: "x' UNION SELECT id, username, password_hash FROM usuarios --" }
+        ]
+    });
+
+    criarLab({
+        mountId: "lab-3",
+        forcarSeguro: true,
+        atalhos: [
+            { rotulo: "Batman", valor: "Batman" },
+            { rotulo: "' OR '1'='1", valor: "' OR '1'='1" },
+            { rotulo: "UNION usuarios", valor: "x' UNION SELECT id, username, password_hash FROM usuarios --" }
+        ]
+    });
+
+    // Link do repositório a partir do próprio Pages, se possível
+    try {
+        var host = location.hostname;
+        if (host.endsWith("github.io")) {
+            var user = host.split(".")[0];
+            var path = location.pathname.split("/").filter(Boolean)[0] || "";
+            if (user && path) {
+                document.getElementById("repo-link").href = "https://github.com/" + user + "/" + path;
+            }
+        }
+    } catch (e) { /* ignore */ }
+})();
+    </script>
+</body>
+</html>

@@ -4,7 +4,9 @@ Material didático para entender **o que é SQL Injection (SQLi)**, **por que ac
 
 ### Demo estática (GitHub Pages)
 
-Quer só ver o fluxo sem instalar PHP? Abra a pasta [`docs/`](docs/) — guia passo a passo no navegador, com respostas **simuladas** (sem backend).
+Quer só ver o fluxo sem instalar PHP? Abra a [demo no GitHub Pages](https://guilhermeroesler.github.io/Demo-SQLi/) ou a pasta [`docs/`](docs/) — guia passo a passo no navegador, com respostas **simuladas** (sem backend).
+
+[![Prévia da demo SQLi](docs/screenshots/demo.png)](https://guilhermeroesler.github.io/Demo-SQLi/)
 
 Para publicar: no GitHub, **Settings → Pages → Deploy from a branch**, escolha a branch principal e a pasta `/docs`.
 
@@ -65,6 +67,9 @@ Aqui o objetivo é a **intuição sólida** do problema e da defesa; o README do
 | Arquivo | Função |
 |---------|--------|
 | `docs/index.html` | Demo estática (GitHub Pages) — roteiro simulado |
+| `docs/og.png` | Imagem Open Graph / Twitter Card (1200×630) |
+| `docs/favicon.svg` | Ícone da demo (também em PNG 32 / apple-touch) |
+| `docs/screenshots/` | Prévia WebP responsiva + PNG de fallback |
 | `setup.php` | Cria/recria `lab.db` e dados fictícios |
 | `conexao.php` | Conexão PDO → SQLite |
 | `index.html` | Interface com **dois modos** (vulnerável / seguro) |

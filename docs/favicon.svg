@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Demo SQLi">
+  <rect width="32" height="32" rx="6" fill="#2f4f4f"/>
+  <ellipse cx="16" cy="10" rx="8" ry="3.2" fill="#e8f6ef"/>
+  <path fill="#e8f6ef" d="M8 10v10c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2V10"/>
+  <ellipse cx="16" cy="20" rx="8" ry="3.2" fill="#e8f6ef"/>
+  <ellipse cx="16" cy="10" rx="8" ry="3.2" fill="none" stroke="#1f6b4a" stroke-width="1.2"/>
+</svg>

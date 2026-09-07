@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo SQLi — Guia interativo (simulação)</title>
     <meta name="description" content="Demo estática educacional de SQL Injection: veja o ataque e a correção com prepared statements, sem backend.">
+    <link rel="canonical" href="https://guilhermeroesler.github.io/Demo-SQLi/">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:site_name" content="Demo SQLi">
+    <meta property="og:url" content="https://guilhermeroesler.github.io/Demo-SQLi/">
+    <meta property="og:title" content="Demo SQLi — Guia interativo (simulação)">
+    <meta property="og:description" content="Demo estática educacional de SQL Injection: veja o ataque e a correção com prepared statements, sem backend.">
+    <meta property="og:image" content="https://guilhermeroesler.github.io/Demo-SQLi/og.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Prévia da demo interativa de SQL Injection">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Demo SQLi — Guia interativo (simulação)">
+    <meta name="twitter:description" content="Demo estática educacional de SQL Injection: veja o ataque e a correção com prepared statements, sem backend.">
+    <meta name="twitter:image" content="https://guilhermeroesler.github.io/Demo-SQLi/og.png">
+    <meta name="twitter:image:alt" content="Prévia da demo interativa de SQL Injection">
     <style>
         :root {
             --ink: #1e2a2a;
@@ -72,6 +92,31 @@
         }
 
         .aviso strong { color: var(--ink); }
+
+        .demo-shot {
+            margin: 16px 0 0;
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            background: var(--page);
+        }
+
+        .demo-shot picture,
+        .demo-shot img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .demo-shot figcaption {
+            margin: 0;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            border-top: 1px solid var(--line);
+            background: var(--paper);
+        }
 
         .badge-sim {
             display: inline-block;
@@ -438,6 +483,26 @@
                 Isto não é um banco nem um servidor PHP — é uma simulação no navegador.
                 Não use estas técnicas contra sistemas de terceiros.
             </div>
+            <figure class="demo-shot">
+                <picture>
+                    <source
+                        type="image/webp"
+                        srcset="screenshots/demo-640.webp 640w,
+                                screenshots/demo-960.webp 960w,
+                                screenshots/demo-1280.webp 1280w"
+                        sizes="(max-width: 880px) 100vw, 832px">
+                    <img
+                        src="screenshots/demo.png"
+                        srcset="screenshots/demo.png 960w"
+                        sizes="(max-width: 880px) 100vw, 832px"
+                        width="960"
+                        height="472"
+                        alt="Interface da demo SQLi com passos Conceito, Busca, Injeção, Modo seguro e Código"
+                        loading="lazy"
+                        decoding="async">
+                </picture>
+                <figcaption>Prévia da interface (WebP responsivo + PNG de fallback).</figcaption>
+            </figure>
         </header>
 
         <nav class="steps" aria-label="Passos do guia" id="tabs">
